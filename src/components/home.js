@@ -30,10 +30,8 @@ export default class Home extends Component {
 
   async moveBookFromShelf(currentShelf, targetShelf, book) {
     if (book.shelf === targetShelf) return; // if book current shelf and the passed shelf are the same then don't add no books
-    if (targetShelf !== "none") {
       // if the target is NOT none , update the book's shelf in data base
       await update(book, targetShelf);
-    }
     book.shelf = targetShelf; // let the new shelf of the book to be the targeted one
     const DeleteBookObj = {};
     DeleteBookObj[currentShelf] = this.state[currentShelf].filter(
