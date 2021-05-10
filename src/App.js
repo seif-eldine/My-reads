@@ -12,7 +12,7 @@ class BooksApp extends React.Component {
   render() {
     return (
       <React.Fragment>
-        <Route path="/home" component={Home} />
+        <Route path="/" exact component={Home} />
         <Route path="/search" component={Search} />
       </React.Fragment>
     )

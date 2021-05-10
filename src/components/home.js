@@ -59,6 +59,7 @@ export default class Home extends Component {
         <div className='list-books-content'>
           {this.state.shelves.map((shelf) => (
             <Shelf
+            key={shelf.type}
               updateParent={(shelfType, books) =>
                 this.updateBooks(shelfType, books)
               }

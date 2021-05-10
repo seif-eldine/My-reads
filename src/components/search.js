@@ -1,6 +1,6 @@
 import React, { Component } from "react";
 import { Link } from "react-router-dom";
-import { search, update } from "../BooksAPI";
+import { search, update, getAll } from "../BooksAPI";
 
 export default class Search extends Component {
   constructor(props) {
@@ -8,8 +8,17 @@ export default class Search extends Component {
     this.state = {
       searchInput: "",
       searchedBooks: [],
+      shelfOptions: [
+        { title: "Currently Reading", value: "currentlyReading" },
+        { title: "Read", value: "read" },
+        { title: "Want to Read", value: "wantToRead" },
+        { title: "None", value: "none" },
+      ],
+      myBooks: [],
+      searchDisabled: true
     };
     this.timeout = null;
+    console.log(window.location.state)
   }
 
   updateSearchInput = (inputValue) => {
@@ -18,20 +27,20 @@ export default class Search extends Component {
     }));
 
     if (!inputValue) {
-        this.setState({  searchedBooks: [] })
-        return
+      this.setState({ searchedBooks: [] });
+      return;
     }
 
     clearTimeout(this.timeout);
 
     this.timeout = setTimeout(() => {
       search(this.state.searchInput).then((res) => {
-          if (! (res instanceof Array)) {
-            this.setState({  searchedBooks: [] })
-            return
-          }
+        if (!(res instanceof Array)) {
+          this.setState({ searchedBooks: [] });
+          return;
+        }
         this.setState({
-          searchedBooks: res
+          searchedBooks: res,
         });
       });
     }, 300);
@@ -39,30 +48,36 @@ export default class Search extends Component {
 
   async addToShelf(shelf, book) {
     await update(book, shelf);
-    alert(`Book has been added to ${shelf}`)
+    alert(`Book has been added to ${shelf}`);
+  }
+
+  componentDidMount() {
+    getAll().then((data) => {
+      const arr = [];
+      for (let book of data) {
+        arr.push({ id: book.id, shelf: book.shelf });
+      }
+      this.setState({
+        myBooks: arr,
+        searchDisabled: false
+      });
+    });
   }
 
   render() {
     return (
       <div className='search-books'>
         <div className='search-books-bar'>
-          <Link to='/home'>
+          <Link to='/'>
             <button className='close-search'>Close</button>
           </Link>
           <div className='search-books-input-wrapper'>
-            {/*
-                        NOTES: The search from BooksAPI is limited to a particular set of search terms.
-                        You can find these search terms here:
-                        https://github.com/udacity/reactnd-project-myreads-starter/blob/master/SEARCH_TERMS.md
-
-                        However, remember that the BooksAPI.search method DOES search by title or author. So, don't worry if
-                        you don't find a specific author or title. Every search is limited by search terms.
-                        */}
             <input
               type='text'
               placeholder='Search by title or author'
               value={this.state.searchInput}
               onChange={(event) => this.updateSearchInput(event.target.value)}
+              disabled={this.state.searchDisabled}
             />
           </div>
         </div>
@@ -77,28 +92,26 @@ export default class Search extends Component {
                       style={{
                         width: 128,
                         height: 193,
-                        backgroundImage: `url('${book.imageLinks.thumbnail}')`,
+                        backgroundImage: `url('${book?.imageLinks?.thumbnail}')`,
                       }}
                     ></div>
                     <div className='book-shelf-changer'>
                       <select
-                        defaultValue='move'
+                        defaultValue={
+                          this.state.myBooks.filter((b) => b.id === book.id)[0]?.shelf ?? "none"
+                        }
                         onChange={async (e) =>
-                          await this.addToShelf(
-                            e.target.value,
-                            book
-                          )
+                          await this.addToShelf(e.target.value, book)
                         }
                       >
                         <option value='move' disabled>
                           Move to...
                         </option>
-                        <option value='currentlyReading'>
-                          Currently Reading
-                        </option>
-                        <option value='read'>Read</option>
-                        <option value='wantToRead'>Want to Read</option>
-                        <option value='none'>None</option>
+                        {this.state.shelfOptions.map((shelf) => (
+                          <option key={shelf.value} value={shelf.value}>
+                            {shelf.title}
+                          </option>
+                        ))}
                       </select>
                     </div>
                   </div>
